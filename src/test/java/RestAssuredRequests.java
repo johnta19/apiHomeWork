@@ -1,13 +1,16 @@
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.json.JSONObject;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import static org.hamcrest.Matchers.*;
 
+import static constants.Endpoints.*;
+import static helpers.CreateBookingHelper.*;
+import static helpers.CreateTokenHelper.*;
+import static helpers.PartialUpdateBookingHelper.partialUpdateBookingPojo;
+import static helpers.PartialUpdateBookingHelper.setPartialUpdateBookingPojo;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 
 public class RestAssuredRequests {
 
@@ -17,32 +20,36 @@ public class RestAssuredRequests {
 
 
     @BeforeSuite
-    public static void setup() {
-        RestAssured.baseURI = "https://restful-booker.herokuapp.com";
+    public void setup() {
+        RestAssured.baseURI = BASE_URL;
     }
 
     @Test
-    public void postRequest() {
+    public void createToken() {
+        setCreateTokenPojo();
         Response response = given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .and()
-                .body(DataBody.requestBody)
+                .body(createTokenPojo)
                 .when()
-                .post("/auth")
+                .post(POST_REQUEST)
                 .then()
                 .statusCode(200)
                 .extract().response();
         token =  response.jsonPath().getString("token");
+
     }
 
-    @Test(dependsOnMethods = "postRequest")
+    @Test(dependsOnMethods = "createToken")
     public void createBooking() {
+        setCreateBookingPojo();
+        setBookingdates();
         Response response = given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .and()
-                .body(DataBody.createBookingBody)
+                .body(createBookingPojo)
                 .when()
-                .post("/booking")
+                .post(CREATE_BOOKING)
                 .then()
                 .statusCode(200)
                 .extract().response();
@@ -52,45 +59,42 @@ public class RestAssuredRequests {
     @Test(dependsOnMethods = "createBooking")
     public void getBooking() {
         given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .when()
-                .get("/booking/" + id)
+                .get(GET_BOOKING + id)
                 .then()
-                .assertThat().body("firstname", equalTo(DataBody.firstname), "lastname"
-                , equalTo(DataBody.lastname), "totalprice", equalTo(DataBody.totalprice),
-                "depositpaid", equalTo(DataBody.depositpaid));
-//                .body("firstname", equalTo(DataBody.firstname))
-//                .and()
-//                .body("lastname", equalTo(DataBody.lastname))
-//                .and()
-//                .body("totalprice", equalTo(DataBody.totalprice))
-//                .and()
-//                .body("depositpaid", equalTo(DataBody.depositpaid));
+//        myAssert();
+                .assertThat()
+                .body("firstname", equalTo("Jim")
+                        , "lastname", equalTo("Brown")
+                        , "totalprice", equalTo(111)
+                        , "depositpaid", equalTo(true));
     }
 
     @Test(dependsOnMethods = "getBooking")
-    public void updateBooking() {
+    public void partialUpdateBooking() {
+        setPartialUpdateBookingPojo();
         given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .and()
                 .header("Cookie", "token=" + token)
-                .body(DataBody.partialUpdateBooking)
+                .body(partialUpdateBookingPojo)
                 .when()
-                .patch("/booking/" + id)
+                .patch(UPDATE_BOOKING + id)
                 .then()
                 .assertThat()
-                .body("firstname", equalTo(DataBody.updateFirstName)
-                        , "lastname", equalTo(DataBody.updateLastName));
+                .body("firstname", equalTo("James")
+                        , "lastname", equalTo("Bond"));
     }
 
-    @Test(dependsOnMethods = "updateBooking" )
+    @Test(dependsOnMethods = "partialUpdateBooking" )
     public void deleteBooking() {
         given()
-                .header("Content-type", "application/json")
+                .contentType(ContentType.JSON)
                 .and()
                 .header("Cookie", "token=" + token)
                 .when()
-                .delete("/booking/" + id)
+                .delete(DELETE_BOOKING + id)
                 .then()
                 .statusCode(201);
     }
