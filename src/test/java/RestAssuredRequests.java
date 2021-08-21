@@ -1,8 +1,8 @@
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import specifications.RequestSpec;
 
 import static constants.Endpoints.*;
 import static helpers.CreateBookingHelper.*;
@@ -11,6 +11,8 @@ import static helpers.PartialUpdateBookingHelper.partialUpdateBookingPojo;
 import static helpers.PartialUpdateBookingHelper.setPartialUpdateBookingPojo;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static specifications.ResponseSpec.responseSpec;
+import static specifications.ResponseSpec.responseSpecDeleteBooking;
 
 public class RestAssuredRequests {
 
@@ -21,20 +23,18 @@ public class RestAssuredRequests {
 
     @BeforeSuite
     public void setup() {
-        RestAssured.baseURI = BASE_URL;
+        RestAssured.requestSpecification = RequestSpec.requestSpec;
     }
 
     @Test
     public void createToken() {
         setCreateTokenPojo();
         Response response = given()
-                .contentType(ContentType.JSON)
-                .and()
                 .body(createTokenPojo)
                 .when()
                 .post(POST_REQUEST)
                 .then()
-                .statusCode(200)
+                .spec(responseSpec)
                 .extract().response();
         token =  response.jsonPath().getString("token");
 
@@ -45,43 +45,40 @@ public class RestAssuredRequests {
         setCreateBookingPojo();
         setBookingdates();
         Response response = given()
-                .contentType(ContentType.JSON)
-                .and()
                 .body(createBookingPojo)
                 .when()
-                .post(CREATE_BOOKING)
+                .post(PATH_TO_BOOKING)
                 .then()
-                .statusCode(200)
+                .spec(responseSpec)
                 .extract().response();
         id = response.jsonPath().getInt("bookingid");
     }
 
     @Test(dependsOnMethods = "createBooking")
     public void getBooking() {
-        given()
-                .contentType(ContentType.JSON)
+        Response response = given()
                 .when()
-                .get(GET_BOOKING + id)
+                .get(PATH_TO_BOOKING + id)
                 .then()
+                .spec(responseSpec)
 //        myAssert();
                 .assertThat()
                 .body("firstname", equalTo("Jim")
                         , "lastname", equalTo("Brown")
                         , "totalprice", equalTo(111)
-                        , "depositpaid", equalTo(true));
+                        , "depositpaid", equalTo(true)).extract().response();
     }
 
     @Test(dependsOnMethods = "getBooking")
     public void partialUpdateBooking() {
         setPartialUpdateBookingPojo();
         given()
-                .contentType(ContentType.JSON)
-                .and()
                 .header("Cookie", "token=" + token)
                 .body(partialUpdateBookingPojo)
                 .when()
-                .patch(UPDATE_BOOKING + id)
+                .patch(PATH_TO_BOOKING + id)
                 .then()
+                .spec(responseSpec)
                 .assertThat()
                 .body("firstname", equalTo("James")
                         , "lastname", equalTo("Bond"));
@@ -90,12 +87,10 @@ public class RestAssuredRequests {
     @Test(dependsOnMethods = "partialUpdateBooking" )
     public void deleteBooking() {
         given()
-                .contentType(ContentType.JSON)
-                .and()
                 .header("Cookie", "token=" + token)
                 .when()
-                .delete(DELETE_BOOKING + id)
+                .delete(PATH_TO_BOOKING + id)
                 .then()
-                .statusCode(201);
+                .spec(responseSpecDeleteBooking);
     }
 }
