@@ -1,12 +1,12 @@
-import io.restassured.RestAssured;
+import base.test.BaseTestApi;
 import io.restassured.response.Response;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import specifications.RequestSpec;
 
-import static constants.Endpoints.*;
+import static constants.Endpoints.PATH_TO_BOOKING;
+import static constants.Endpoints.POST_REQUEST;
 import static helpers.CreateBookingHelper.*;
-import static helpers.CreateTokenHelper.*;
+import static helpers.CreateTokenHelper.createTokenPojo;
+import static helpers.CreateTokenHelper.setCreateTokenPojo;
 import static helpers.PartialUpdateBookingHelper.partialUpdateBookingPojo;
 import static helpers.PartialUpdateBookingHelper.setPartialUpdateBookingPojo;
 import static io.restassured.RestAssured.given;
@@ -14,17 +14,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static specifications.ResponseSpec.responseSpec;
 import static specifications.ResponseSpec.responseSpecDeleteBooking;
 
-public class RestAssuredRequests {
 
+public class RestAssuredRequests extends BaseTestApi {
 
     private int id;
     private String token;
-
-
-    @BeforeSuite
-    public void setup() {
-        RestAssured.requestSpecification = RequestSpec.requestSpec;
-    }
 
     @Test
     public void createToken() {
@@ -36,7 +30,7 @@ public class RestAssuredRequests {
                 .then()
                 .spec(responseSpec)
                 .extract().response();
-        token =  response.jsonPath().getString("token");
+        token = response.jsonPath().getString("token");
 
     }
 
@@ -56,12 +50,11 @@ public class RestAssuredRequests {
 
     @Test(dependsOnMethods = "createBooking")
     public void getBooking() {
-        Response response = given()
+        given()
                 .when()
                 .get(PATH_TO_BOOKING + id)
                 .then()
                 .spec(responseSpec)
-//        myAssert();
                 .assertThat()
                 .body("firstname", equalTo("Jim")
                         , "lastname", equalTo("Brown")
@@ -84,7 +77,7 @@ public class RestAssuredRequests {
                         , "lastname", equalTo("Bond"));
     }
 
-    @Test(dependsOnMethods = "partialUpdateBooking" )
+    @Test(dependsOnMethods = "partialUpdateBooking")
     public void deleteBooking() {
         given()
                 .header("Cookie", "token=" + token)
