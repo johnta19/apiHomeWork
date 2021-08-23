@@ -26,6 +26,11 @@ public class CreateTokenPojo {
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
+    public CreateTokenPojo(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
     @JsonProperty("username")
     public String getUsername() {
         return username;

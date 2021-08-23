@@ -26,6 +26,11 @@ public class Bookingdates {
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
+    public Bookingdates(String checkin, String checkout) {
+        this.checkin = checkin;
+        this.checkout = checkout;
+    }
+
     @JsonProperty("checkin")
     public String getCheckin() {
         return checkin;

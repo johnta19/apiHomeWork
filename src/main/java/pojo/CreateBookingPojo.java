@@ -38,6 +38,16 @@ public class CreateBookingPojo {
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
+    public CreateBookingPojo(String firstname, String lastname, Integer totalprice
+            , Boolean depositpaid, Bookingdates bookingdates, String additionalneeds) {
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.totalprice = totalprice;
+        this.depositpaid = depositpaid;
+        this.bookingdates = bookingdates;
+        this.additionalneeds = additionalneeds;
+    }
+
     @JsonProperty("firstname")
     public String getFirstname() {
         return firstname;

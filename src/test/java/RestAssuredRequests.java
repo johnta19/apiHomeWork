@@ -4,11 +4,6 @@ import org.testng.annotations.Test;
 
 import static constants.Endpoints.PATH_TO_BOOKING;
 import static constants.Endpoints.POST_REQUEST;
-import static helpers.CreateBookingHelper.*;
-import static helpers.CreateTokenHelper.createTokenPojo;
-import static helpers.CreateTokenHelper.setCreateTokenPojo;
-import static helpers.PartialUpdateBookingHelper.partialUpdateBookingPojo;
-import static helpers.PartialUpdateBookingHelper.setPartialUpdateBookingPojo;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static specifications.ResponseSpec.responseSpec;
@@ -17,12 +12,8 @@ import static specifications.ResponseSpec.responseSpecDeleteBooking;
 
 public class RestAssuredRequests extends BaseTestApi {
 
-    private int id;
-    private String token;
-
     @Test
     public void createToken() {
-        setCreateTokenPojo();
         Response response = given()
                 .body(createTokenPojo)
                 .when()
@@ -36,8 +27,6 @@ public class RestAssuredRequests extends BaseTestApi {
 
     @Test(dependsOnMethods = "createToken")
     public void createBooking() {
-        setCreateBookingPojo();
-        setBookingdates();
         Response response = given()
                 .body(createBookingPojo)
                 .when()
@@ -64,7 +53,6 @@ public class RestAssuredRequests extends BaseTestApi {
 
     @Test(dependsOnMethods = "getBooking")
     public void partialUpdateBooking() {
-        setPartialUpdateBookingPojo();
         given()
                 .header("Cookie", "token=" + token)
                 .body(partialUpdateBookingPojo)
