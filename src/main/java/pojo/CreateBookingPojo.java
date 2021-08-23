@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import lombok.Builder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -20,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "bookingdates",
         "additionalneeds"
 })
-@Generated("jsonschema2pojo")
+
+@Builder
 public class CreateBookingPojo {
 
     @JsonProperty("firstname")
@@ -38,15 +40,6 @@ public class CreateBookingPojo {
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
-    public CreateBookingPojo(String firstname, String lastname, Integer totalprice
-            , Boolean depositpaid, Bookingdates bookingdates, String additionalneeds) {
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.totalprice = totalprice;
-        this.depositpaid = depositpaid;
-        this.bookingdates = bookingdates;
-        this.additionalneeds = additionalneeds;
-    }
 
     @JsonProperty("firstname")
     public String getFirstname() {

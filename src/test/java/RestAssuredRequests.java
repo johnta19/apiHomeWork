@@ -1,49 +1,56 @@
 import base.test.BaseTestApi;
+import data.provider.Builder;
+import data.provider.DataProvider;
 import io.restassured.response.Response;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static constants.Endpoints.PATH_TO_BOOKING;
 import static constants.Endpoints.POST_REQUEST;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static specifications.ResponseSpec.responseSpec;
-import static specifications.ResponseSpec.responseSpecDeleteBooking;
+import static specifications.ResponseSpec.*;
 
 
 public class RestAssuredRequests extends BaseTestApi {
 
-    @Test
+    private DataProvider dataProvider = new DataProvider();
+    private Builder builder = new Builder();
+
+
+    @BeforeTest
     public void createToken() {
         Response response = given()
-                .body(createTokenPojo)
+                .body(builder.createToken())
                 .when()
                 .post(POST_REQUEST)
                 .then()
-                .spec(responseSpec)
+                .spec(checkStatus200)
                 .extract().response();
-        token = response.jsonPath().getString("token");
+        dataProvider.setToken(response.jsonPath().getString("token"));
 
     }
 
-    @Test(dependsOnMethods = "createToken")
+    @Test
     public void createBooking() {
         Response response = given()
-                .body(createBookingPojo)
+                .body(builder.createBooking())
                 .when()
                 .post(PATH_TO_BOOKING)
                 .then()
-                .spec(responseSpec)
+                .spec(checkStatus200)
                 .extract().response();
-        id = response.jsonPath().getInt("bookingid");
+        dataProvider.setId(response.jsonPath().getInt("bookingid"));
     }
 
-    @Test(dependsOnMethods = "createBooking")
+    @Test
     public void getBooking() {
         given()
                 .when()
-                .get(PATH_TO_BOOKING + id)
+                .get(PATH_TO_BOOKING + dataProvider.getId())
                 .then()
-                .spec(responseSpec)
+                .spec(checkStatus200)
                 .assertThat()
                 .body("firstname", equalTo("Jim")
                         , "lastname", equalTo("Brown")
@@ -51,27 +58,27 @@ public class RestAssuredRequests extends BaseTestApi {
                         , "depositpaid", equalTo(true)).extract().response();
     }
 
-    @Test(dependsOnMethods = "getBooking")
+
+    @Test
     public void partialUpdateBooking() {
         given()
-                .header("Cookie", "token=" + token)
-                .body(partialUpdateBookingPojo)
+                .header("Cookie", "token=" + dataProvider.getToken())
+                .body(builder.updateAuthor())
                 .when()
-                .patch(PATH_TO_BOOKING + id)
+                .patch(PATH_TO_BOOKING + dataProvider.getId())
                 .then()
-                .spec(responseSpec)
+                .spec(checkStatus200)
                 .assertThat()
-                .body("firstname", equalTo("James")
-                        , "lastname", equalTo("Bond"));
+                .body("firstname", equalTo("James"), "lastname", equalTo("Bond"));
     }
 
-    @Test(dependsOnMethods = "partialUpdateBooking")
+    @AfterTest
     public void deleteBooking() {
         given()
-                .header("Cookie", "token=" + token)
+                .header("Cookie", "token=" + dataProvider.getToken())
                 .when()
-                .delete(PATH_TO_BOOKING + id)
+                .delete(PATH_TO_BOOKING + dataProvider.getId())
                 .then()
-                .spec(responseSpecDeleteBooking);
+                .spec(checkStatus201);
     }
 }
