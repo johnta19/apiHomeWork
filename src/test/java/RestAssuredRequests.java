@@ -1,97 +1,84 @@
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.restassured.RestAssured;
+import base.test.BaseTestApi;
+import data.provider.Builder;
+import data.provider.DataProvider;
 import io.restassured.response.Response;
-import org.json.JSONObject;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import static org.hamcrest.Matchers.*;
 
+import static constants.Endpoints.PATH_TO_BOOKING;
+import static constants.Endpoints.POST_REQUEST;
 import static io.restassured.RestAssured.given;
-
-public class RestAssuredRequests {
-
-
-    private int id;
-    private String token;
+import static org.hamcrest.Matchers.equalTo;
+import static specifications.ResponseSpec.*;
 
 
-    @BeforeSuite
-    public static void setup() {
-        RestAssured.baseURI = "https://restful-booker.herokuapp.com";
+public class RestAssuredRequests extends BaseTestApi {
+
+    private DataProvider dataProvider = new DataProvider();
+    private Builder builder = new Builder();
+
+
+    @BeforeTest
+    public void createToken() {
+        Response response = given()
+                .body(builder.createToken())
+                .when()
+                .post(POST_REQUEST)
+                .then()
+                .spec(checkStatus200)
+                .extract().response();
+        dataProvider.setToken(response.jsonPath().getString("token"));
+
     }
 
     @Test
-    public void postRequest() {
-        Response response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(DataBody.requestBody)
-                .when()
-                .post("/auth")
-                .then()
-                .statusCode(200)
-                .extract().response();
-        token =  response.jsonPath().getString("token");
-    }
-
-    @Test(dependsOnMethods = "postRequest")
     public void createBooking() {
         Response response = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body(DataBody.createBookingBody)
+                .body(builder.createBooking())
                 .when()
-                .post("/booking")
+                .post(PATH_TO_BOOKING)
                 .then()
-                .statusCode(200)
+                .spec(checkStatus200)
                 .extract().response();
-        id = response.jsonPath().getInt("bookingid");
+        dataProvider.setId(response.jsonPath().getInt("bookingid"));
     }
 
-    @Test(dependsOnMethods = "createBooking")
+    @Test
     public void getBooking() {
         given()
-                .header("Content-type", "application/json")
                 .when()
-                .get("/booking/" + id)
+                .get(PATH_TO_BOOKING + dataProvider.getId())
                 .then()
-                .assertThat().body("firstname", equalTo(DataBody.firstname), "lastname"
-                , equalTo(DataBody.lastname), "totalprice", equalTo(DataBody.totalprice),
-                "depositpaid", equalTo(DataBody.depositpaid));
-//                .body("firstname", equalTo(DataBody.firstname))
-//                .and()
-//                .body("lastname", equalTo(DataBody.lastname))
-//                .and()
-//                .body("totalprice", equalTo(DataBody.totalprice))
-//                .and()
-//                .body("depositpaid", equalTo(DataBody.depositpaid));
-    }
-
-    @Test(dependsOnMethods = "getBooking")
-    public void updateBooking() {
-        given()
-                .header("Content-type", "application/json")
-                .and()
-                .header("Cookie", "token=" + token)
-                .body(DataBody.partialUpdateBooking)
-                .when()
-                .patch("/booking/" + id)
-                .then()
+                .spec(checkStatus200)
                 .assertThat()
-                .body("firstname", equalTo(DataBody.updateFirstName)
-                        , "lastname", equalTo(DataBody.updateLastName));
+                .body("firstname", equalTo("Jim")
+                        , "lastname", equalTo("Brown")
+                        , "totalprice", equalTo(111)
+                        , "depositpaid", equalTo(true)).extract().response();
     }
 
-    @Test(dependsOnMethods = "updateBooking" )
+
+    @Test
+    public void partialUpdateBooking() {
+        given()
+                .header("Cookie", "token=" + dataProvider.getToken())
+                .body(builder.updateAuthor())
+                .when()
+                .patch(PATH_TO_BOOKING + dataProvider.getId())
+                .then()
+                .spec(checkStatus200)
+                .assertThat()
+                .body("firstname", equalTo("James"), "lastname", equalTo("Bond"));
+    }
+
+    @AfterTest
     public void deleteBooking() {
         given()
-                .header("Content-type", "application/json")
-                .and()
-                .header("Cookie", "token=" + token)
+                .header("Cookie", "token=" + dataProvider.getToken())
                 .when()
-                .delete("/booking/" + id)
+                .delete(PATH_TO_BOOKING + dataProvider.getId())
                 .then()
-                .statusCode(201);
+                .spec(checkStatus201);
     }
 }
